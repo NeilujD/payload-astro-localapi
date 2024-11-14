@@ -1,0 +1,43 @@
+services:
+  pg:
+    restart: always
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    volumes:
+      - data:/data/db
+    env_file:
+      - .env
+
+  cms:
+    build:
+      dockerfile: ./dockerfile.cms
+      context: .
+    ports:
+      - 3000:3000
+    depends_on:
+      - pg
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: ["bun", "--env-file=.env", "run", "cms:serve"]
+    env_file:
+      - .env
+
+  web:
+    build:
+      dockerfile: ./dockerfile.web
+      context: .
+    ports:
+      - 8080:8080
+    depends_on:
+      - cms
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: ["bun", "--env-file=.env", "run", "web:dev"]
+    env_file:
+      - .env
+
+volumes:
+  data:
